@@ -1,10 +1,5 @@
 using Ilmhub.Spaces.Client.Interfaces;
 using Ilmhub.Spaces.Client.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ilmhub.Spaces.Client.Services;
 
@@ -16,24 +11,54 @@ public class MockCourseService : ICourseService
     {
         courses = new List<Course>
         {
-            new Course { Id = 1, Name = "Web Dasturlash", Description = "HTML, CSS, va JavaScript asoslari", Price = 1500000, DurationInWeeks = 12, Instructor = "Alisher Qodirov", StartDate = DateTime.Now.AddDays(7), IsActive = true },
-            new Course { Id = 2, Name = "Python Asoslari", Description = "Python dasturlash tili bo'yicha boshlang'ich kurs", Price = 1200000, DurationInWeeks = 8, Instructor = "Gulnora Karimova", StartDate = DateTime.Now.AddDays(14), IsActive = true },
-            new Course { Id = 3, Name = "Ma'lumotlar Bazasi", Description = "SQL va PostgreSQL bo'yicha amaliy kurs", Price = 1800000, DurationInWeeks = 10, Instructor = "Bobur Alimov", StartDate = DateTime.Now.AddDays(21), IsActive = true },
-            new Course { Id = 4, Name = "Java Dasturlash", Description = "Java dasturlash tili va OOP kontseptsiyalari", Price = 2000000, DurationInWeeks = 16, Instructor = "Dilshod Tursunov", StartDate = DateTime.Now.AddDays(30), IsActive = true },
-            new Course { Id = 5, Name = "Mobile Dasturlash", Description = "Android va iOS uchun mobil ilovalar yaratish", Price = 2500000, DurationInWeeks = 20, Instructor = "Nodira Azizova", StartDate = DateTime.Now.AddDays(45), IsActive = true },
-            new Course { Id = 6, Name = "Frontend Frameworklar", Description = "React va Vue.js bo'yicha amaliy kurs", Price = 1800000, DurationInWeeks = 14, Instructor = "Jamshid Nurmatov", StartDate = DateTime.Now.AddDays(60), IsActive = true },
-            new Course { Id = 7, Name = "Backend Dasturlash", Description = "Node.js va Express.js orqali server yaratish", Price = 2200000, DurationInWeeks = 16, Instructor = "Sarvar Abdullayev", StartDate = DateTime.Now.AddDays(75), IsActive = true },
-            new Course { Id = 8, Name = "DevOps Asoslari", Description = "Docker, Kubernetes va CI/CD jarayonlari", Price = 2800000, DurationInWeeks = 18, Instructor = "Oybek Toshpulatov", StartDate = DateTime.Now.AddDays(90), IsActive = true },
-            new Course { Id = 9, Name = "Kiberhavfsizlik", Description = "Tarmoq va dasturiy ta'minot xavfsizligi asoslari", Price = 3000000, DurationInWeeks = 20, Instructor = "Malika Rahimova", StartDate = DateTime.Now.AddDays(105), IsActive = true },
-            new Course { Id = 10, Name = "Sun'iy Intellekt", Description = "Machine Learning va Deep Learning asoslari", Price = 3500000, DurationInWeeks = 24, Instructor = "Akmal Xolmatov", StartDate = DateTime.Now.AddDays(120), IsActive = true },
-            // ... (add 10 more courses with similar Uzbek-themed information)
+            new Course { Id = 1, Name = "Phonics 1", Description = "Kids kursi 1-darajasi", TypeId = 2, LevelId = 100 },
+            new Course { Id = 2, Name = "Phonics 2", Description = "Kids kursi 2-darajasi", TypeId = 2, LevelId = 100 },
+            new Course { Id = 3, Name = "Phonics 3", Description = "Kids kursi 3-darajasi", TypeId = 2, LevelId = 100 },
+            new Course { Id = 4, Name = "Phonics 4", Description = "Kids kursi 4-darajasi", TypeId = 2, LevelId = 100 },
+
+            // English Courses - Junior
+            new Course { Id = 5, Name = "Starters", Description = "Kids bitiruvchilari uchun", TypeId = 2, LevelId = 101 },
+
+            // English Courses - General
+            new Course { Id = 6, Name = "The Spire 1", Description = "A1 darajasidagi ingliz tili kursi", TypeId = 2, LevelId = 102 },
+            new Course { Id = 7, Name = "The Spire 2", Description = "A2 darajasidagi ingliz tili kursi", TypeId = 2, LevelId = 102 },
+            new Course { Id = 8, Name = "The Spire 3", Description = "Pre-B1 darajasidagi ingliz tili kursi", TypeId = 2, LevelId = 102 },
+            new Course { Id = 9, Name = "The Spire 4", Description = "B1 darajasidagi ingliz tili kursi", TypeId = 2, LevelId = 102 },
+            new Course { Id = 10, Name = "The Spire 5", Description = "Pre-B2 darajasidagi ingliz tili kursi", TypeId = 2, LevelId = 102 },
+            new Course { Id = 11, Name = "The Spire 6", Description = "B2 darajasidagi ingliz tili kursi", TypeId = 2, LevelId = 102 },
+
+            // English Courses - Intensive
+            new Course { Id = 12, Name = "Level 7", Description = "IELTS va CEFR uchun intensiv 1-bosqich", TypeId = 2, LevelId = 103 },
+            new Course { Id = 13, Name = "Level 8", Description = "IELTS va CEFR uchun intensiv 2-bosqich", TypeId = 2, LevelId = 103 },
+
+            // IT Courses - Bits
+            new Course { Id = 14, Name = "Scratch", Description = "Scratch bilan dasturlashga kirish", TypeId = 1, LevelId = 1 },
+            new Course { Id = 15, Name = "Lego Mindstorms (Begin)", Description = "Lego Mindstorms bilan robototexnikaning asoslari", TypeId = 1, LevelId = 1 },
+
+            // IT Courses - Bytes
+            new Course { Id = 16, Name = "Extended Scratch", Description = "Kengaytirilgan Scratch dasturlash", TypeId = 1, LevelId = 2 },
+            new Course { Id = 17, Name = "Lego (Spike Prime)", Description = "Spike Prime bilan robototexnikaning kengaytirilgan kursi", TypeId = 1, LevelId = 2 },
+            new Course { Id = 18, Name = "Savodxonlik", Description = "Raqsodxonlik kursi", TypeId = 1, LevelId = 2 },
+            new Course { Id = 19, Name = "App Inventor", Description = "Mobil ilovalar ishlab chiqish asoslari", TypeId = 1, LevelId = 2 },
+            new Course { Id = 20, Name = "Robotics (Extended)", Description = "5 oylik kengaytirilgan robototexnika kursi", TypeId = 1, LevelId = 2 },
+
+            // IT Courses - Junior
+            new Course { Id = 21, Name = "Extended Python", Description = "Kengaytirilgan Python dasturlash", TypeId = 1, LevelId = 3 },
+            new Course { Id = 22, Name = "AutoCAD", Description = "Kompyuter yordamida loyihalash kursi", TypeId = 1, LevelId = 3 },
+
+            // IT Courses - Foundation
+            new Course { Id = 23, Name = "C++", Description = "C++ dasturlash kursi", TypeId = 1, LevelId = 4 },
+
+            // IT Courses - Professional
+            new Course { Id = 24, Name = "Frontend", Description = "Frontend mutaxassisligi kursi", TypeId = 1, LevelId = 5 },
+            new Course { Id = 25, Name = "Backend", Description = "Backend mutaxassisligi kursi", TypeId = 1, LevelId = 5 }
         };
     }
 
-    public ValueTask<IEnumerable<Course>> GetCoursesAsync(CancellationToken cancellationToken = default) => 
+    public ValueTask<IEnumerable<Course>> GetCoursesAsync(CancellationToken cancellationToken = default) =>
         new(courses);
 
-    public ValueTask<Course?> GetCourseByIdAsync(int id, CancellationToken cancellationToken = default) => 
+    public ValueTask<Course?> GetCourseByIdAsync(int id, CancellationToken cancellationToken = default) =>
         new(courses.FirstOrDefault(c => c.Id == id));
 
     public ValueTask<Course> CreateCourseAsync(Course course, CancellationToken cancellationToken = default)

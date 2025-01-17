@@ -10,7 +10,7 @@ namespace Ilmhub.Spaces.Client.Services;
 
 public class MockLeadService : ILeadService
 {
-    private readonly List<Lead> leads;
+    private readonly List<Lead> leads = [];
     private readonly ICourseService courseService;
 
     public MockLeadService(ICourseService courseService)
@@ -41,7 +41,7 @@ public class MockLeadService : ILeadService
     }
 
     public ValueTask<IEnumerable<Lead>> GetLeadsAsync(CancellationToken cancellationToken = default) =>
-        new(leads);
+        new([.. leads.Where(l => !l.IsHidden)]);
 
     public ValueTask<Lead?> GetLeadByIdAsync(int id, CancellationToken cancellationToken = default) =>
         new(leads.FirstOrDefault(l => l.Id == id));
@@ -108,5 +108,32 @@ public class MockLeadService : ILeadService
         };
 
         return reasons[new Random().Next(reasons.Length)];
+    }
+    private readonly List<Lead> hiddenLeads = [];
+
+    public Task<List<Lead>> GetHiddenLeadsAsync()
+    {
+        return Task.FromResult(hiddenLeads);
+    }
+    public Task UpdateLeadVisibilityAsync(Lead lead, bool isHidden)
+    {
+        lead.IsHidden = isHidden;
+        if (isHidden)
+        {
+            if (!hiddenLeads.Contains(lead))
+            {
+                hiddenLeads.Add(lead);
+                leads.Remove(lead);
+            }
+        }
+        else
+        {
+            hiddenLeads.Remove(lead);
+            if (!leads.Contains(lead))
+            {
+                leads.Add(lead);
+            }
+        }
+        return Task.CompletedTask;
     }
 }

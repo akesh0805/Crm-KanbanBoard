@@ -1,0 +1,98 @@
+<MudSnackbarProvider SnackbarLocation="SnackbarLocation.BottomCenter" />
+
+
+<MudDialog style="width: 500px;">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Yangi Lead Yaratish</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" Model="newLead" Class="ma-2">
+            <MudTextField T="string" Label="Ism Familiya" @bind-Value="newLead.Name" Required="true"
+                Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person" Class="ma-2" />
+            <MudTextField T="string" Label="Telefon Raqam" @bind-Value="newLead.Phone" Required="true"
+                InputType="InputType.Number" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Phone"
+                Class="ma-2" />
+            <MudSelect T="LeadSource" Label="Manba" @bind-Value="newLead.Source" Required="true"
+                Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Source" Class="ma-2">
+                @foreach (LeadSource column in Enum.GetValues(typeof(LeadSource)))
+                {
+                    <MudSelectItem T="LeadSource" Value="column">
+                        <MudStack Row="true">
+                            <MudIcon Icon="@GetIconForSource(column)" Class="ml-2" Color="Color.Primary" />
+                            <MudText>
+                                @column
+                            </MudText>
+                        </MudStack>
+                    </MudSelectItem>
+                }
+            </MudSelect>
+            <MudSelect T="Course" Label="Qiziqayotgan kursi" @bind-Value="newLead.InterestedCourse" Required="true"
+                Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Star" Class="ma-2">
+                @foreach (var course in courses)
+                {
+                    <MudSelectItem T="Course" Value="course">
+                        <MudStack Row="true">
+                            <MudIcon Icon="@Icons.Material.Filled.ChromeReaderMode" Class="ml-2" Color="Color.Primary" />
+                            <MudText>
+                                @course.Name
+                            </MudText>
+                        </MudStack>
+                    </MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField Class="mt-1 ml-2 mr-2" T="string" Label="Notes" @bind-Value="newLead.Notes"
+                Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Note" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="AddLead" Style="margin-right: 8px;">Qo'shish</MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">Bekor qilish</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private ICourseService CourseService { get; set; } = default!; // Inject the course service
+    [Parameter] public EventCallback<Lead> OnLeadAdded { get; set; }
+
+    private Lead newLead = new();
+    private List<Course> courses = new();
+    private MudForm? form;
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        courses = (await CourseService.GetCoursesAsync()).ToList();
+    }
+
+    private async Task AddLead()
+    {
+        await form!.Validate();
+        if (form.IsValid)
+        {
+            newLead.CreatedAt = DateTime.Now;
+            await OnLeadAdded.InvokeAsync(newLead);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            Snackbar.Add("Iltimos, ism, telefon va qiziqayotgan kursni to'ldiring.", Severity.Error);
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+    private string GetIconForSource(LeadSource source)
+    {
+        return source switch
+        {
+            LeadSource.Telegram => Icons.Custom.Brands.Telegram,
+            LeadSource.Instagram => Icons.Custom.Brands.Instagram,
+            LeadSource.Referral => Icons.Material.Rounded.PeopleAlt,
+            _ => Icons.Material.Filled.Help
+        };
+    }
+}

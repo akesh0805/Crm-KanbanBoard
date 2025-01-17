@@ -10,4 +10,6 @@ public class Course
     public string? Instructor { get; set; }
     public DateTime StartDate { get; set; }
     public bool IsActive { get; set; }
+    public int TypeId { get; set; }
+    public int LevelId { get; set; }
 }

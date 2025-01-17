@@ -5,79 +5,143 @@
 @using MudBlazor
 @inject IDialogService DialogService
 @inject ILeadService LeadService
+@inject ICourseService CourseService
 
-<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="pa-4">
-    <MudStack Row="true" AlignItems="@AlignItems.Center" Spacing="3">
-        <MudButton Variant="Variant.Outlined"
-                   EndIcon="@Icons.Material.Filled.Add"
-                   Color="Color.Tertiary"
-                   Class="ma-4">
-            Qo'shish
+<style>
+    .left-strip {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 2px;
+        height: 93%;
+        bottom: 0;
+        border-top-left-radius: 4px;
+        border-bottom-left-radius: 4px;
+    }
+
+    .scrollable-menu {
+        max-height: 300px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="pa-3">
+    <MudStack Row="true" AlignItems="@AlignItems.Center" Spacing="1" Style="margin-top: -5px;">
+        <MudButton Class="ma-4" Target="_blank" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add"
+            Style="text-transform:none" @onclick="OpenAddLeadDialog">
+            QO'SHISH
         </MudButton>
-        <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Placeholder="Qidirish"
-                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                      IconSize="Size.Medium" Class="mt-0"></MudTextField>
-        <MudMenu FullWidth="false" Class="menu-position">
-            <ActivatorContent>
-                <MudChip T="string" Icon="@Icons.Material.Filled.Person" Color="Color.Primary">Status</MudChip>
-            </ActivatorContent>
+        <MudSpacer />
+        <MudSpacer />
+        <MudSpacer />
+
+        <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Placeholder="Qidirish" Variant="Variant.Outlined"
+            Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"
+            Immediate="true" Style="padding-left:4;"></MudTextField>
+
+        <MudSelect style="width: 120px;" T="LeadSource?" Label="Tarmoq" Variant="Variant.Outlined" Clearable="true" Value="selectedLeadSource"
+            ValueChanged="OnSourceSelected">
+            <MudSelectItem T="LeadSource?" Value="null"></MudSelectItem>
+            @foreach (LeadSource column in Enum.GetValues(typeof(LeadSource)))
+            {
+                <MudSelectItem T="LeadSource?" Value="column">
+                    <MudStack Row="true">
+                        <MudIcon Icon="@GetIconForSource(column)" Class="ml-1" Color="Color.Primary" Size="Size.Small" />
+                        <MudText Typo="Typo.subtitle2">@column</MudText>
+                    </MudStack>
+                </MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudSelect style="width: 120px;" T="Course" Label="Kurs" Variant="Variant.Outlined" Clearable="true" Value="selectedCourse"
+            ValueChanged="OnCourseSelected" Class="mr-2">
+            <MudSelectItem T="Course" Value="null"></MudSelectItem>
+            @foreach (var course in courses)
+            {
+                <MudSelectItem T="Course" Value="course">
+                    <MudStack Row="true">
+                        <MudIcon Icon="@Icons.Material.Filled.ChromeReaderMode" Color="Color.Primary" Class="ml-1" Size="Size.Small">
+                        </MudIcon>
+                        <MudText Typo="Typo.subtitle2">@course.Name</MudText>
+                    </MudStack>
+                </MudSelectItem>
+            }
+        </MudSelect>
+    </MudStack>
+    <div class="hide-scrollbar" style="overflow-x: auto; white-space: nowrap;">
+        <MudDropContainer T="Lead" @ref="dropContainer" Items="@filteredLeads"
+            ItemsSelector="@( (item, column) => GetColumnForStatus(item.Status) == column )" ItemDropped="LeadUpdated"
+            Class="d-flex flex-wrap flex-grow-1" @key="filteredLeads.Count">
             <ChildContent>
-                @foreach (var column in new[] { "Barchasi", "Yangi Lidlar", "Bog'lanilgan", "Kuzatuvda", "Yakuniy Holat" })
+                @foreach (var column in new[] { "Yangi Lidlar", "Bog'lanilgan", "Kuzatuvda", "Yakuniy Holat" })
                 {
-                    <MudMenuItem Icon="@GetIconForColumn(column)" Style="@($"color: {GetColorForColumn(column)};")" @onclick="() => SetCurrentStatus(column)">@column</MudMenuItem>
+                    <MudPaper Elevation="0"
+                        Style="height: calc(100vh - 175px); flex: 1; display: flex; flex-direction: column; min-width: 200px; max-width: 400px; margin-bottom: 8px;"
+                        Class="mx-1 transparent rounded-lg">
+                        <MudList T="Lead" Style="flex-grow: 1; overflow-y: auto;"
+                            Class="d-flex flex-column mud-height-full">
+                            <div style="display: flex; justify-content: space-between; padding: 8px;">
+                                <MudText Class="ma-2 mt-2" Typo="Typo.subtitle1" Align="Align.Left"
+                                    Style="@($"color: {GetColorForColumn(column)};")">
+                                    <b>@column</b>
+                                </MudText>
+                                <MudMenu Icon="@Icons.Material.Rounded.MoreVert" TransformOrigin="Origin.TopRight"
+                                    ListClass="d-flex flex-column" PopoverClass="mud-elevation-1">
+                                    <MudButton Class="ma-1" Size="Size.Small" Color="Color.Default"
+                                        Style="justify-content: flex-start; text-align: left;"
+                                        StartIcon="@Icons.Material.Filled.RemoveRedEye" @onclick="ToggleHiddenLeads">
+                                        @(showingHiddenLeads ? "Barcha Leadlar" : "Yashirin Leadlar")
+                                    </MudButton>
+                                </MudMenu>
+                            </div>
+                            <MudDropZone T="Lead" Identifier="@column" Class="flex-grow-1 overflow-y-auto hide-scrollbar"
+                                AllowReorder="true" />
+                        </MudList>
+                    </MudPaper>
                 }
             </ChildContent>
-        </MudMenu>
-        <MudSpacer />
-        <MudSpacer />
-        <MudSpacer />
-        <MudSpacer />
-    </MudStack>
-
-    <div class="hide-scrollbar" style="overflow-x: auto; white-space: nowrap;">
-        <MudDropContainer T="Lead" @ref="dropContainer" Items="@filteredLeads" ItemsSelector="@((item,column) => GetColumnForStatus(item.Status) == column)" ItemDropped="LeadUpdated" Class="d-flex flex-wrap flex-grow-1">
-            <ChildContent>
-            @foreach (var column in new[] { "Yangi Lidlar", "Bog'lanilgan", "Kuzatuvda", "Yakuniy Holat" })
-            {
-                <MudPaper Elevation="0" Style="height: calc(100vh - 175px); flex: 1; display: flex; flex-direction: column; min-width: 200px; max-width: 400px;" Class="pa-4 mx-1 transparent rounded-lg">
-                    <MudList T="Lead" Style="flex-grow: 1; overflow-y: auto;" Class="d-flex flex-column mud-height-full">
-                        <MudListSubheader>
-                            <MudToolBar Gutters="false" Class="py-2">
-                                <div class="column" style="background-color:@GetColorForColumn(column); height: 4px; margin-bottom: 5px ; width: 100%;">
-                                </div>
-                            </MudToolBar>
-                        </MudListSubheader>
-                        <MudDropZone T="Lead" Identifier="@column" Class="flex-grow-1 overflow-y-auto hide-scrollbar" AllowReorder="true"/>
-                    </MudList>
-                </MudPaper>
-            }
-            </ChildContent>
             <ItemRenderer>
-                <MudCard Class="ma-4 rounded-lg" Elevation="5" @onclick="() => ShowLeadDetails(context)">
+                <MudCard Class="ma-2 rounded-lg mud-card"
+                    Style="position:relative; border-top: 1px solid rgb(97, 94, 94);">
+                    <div class="left-strip" style="background-color:@GetColorForStatus2(context.Status);"></div>
                     <MudCardContent>
-                        <MudStack Row="true" AlignItems="@AlignItems.Center">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween"
+                            Class="mt-n2">
                             <MudMenu Dense="true" MaxHeight="200">
                                 <ActivatorContent>
-                                    <MudChip T="string" Variant="Variant.Text" Color="@GetColorForStatus(context.Status)" Size="Size.Small">@context.Status</MudChip>
+                                    <MudChip T="string" Variant="Variant.Filled"
+                                        Color="@GetColorForStatus(context.Status)" Size="Size.Small"
+                                        Style="cursor: pointer;">
+                                        @context.Status
+                                    </MudChip>
                                 </ActivatorContent>
                                 <ChildContent>
                                     @foreach (LeadStatus status in Enum.GetValues(typeof(LeadStatus)))
                                     {
-                                        <MudMenuItem OnClick="@(() => UpdateLeadStatus(context, status))">@status</MudMenuItem>
+                                        <MudMenuItem OnClick="@(() => UpdateLeadStatus(context, status))">@status
+                                        </MudMenuItem>
                                     }
                                 </ChildContent>
                             </MudMenu>
-                            <MudText Typo="Typo.body2">@(context.Name?.Substring(0, Math.Min(context.Name?.Length ?? 0, 20)))</MudText>
+                            <MudText Typo="Typo.input" Color="Color.Primary" @onclick="() => ShowLeadDetails(context)">
+                                @context.Name?.Substring(0, Math.Min(context.Name?.Length ?? 0, 20))</MudText>
                         </MudStack>
-                        <MudStack>
-                            <MudStack Row="true" Justify="@Justify.FlexStart" AlignItems="@AlignItems.Start">
-                                <MudIcon Color="Color.Info" Style="font-size: small;" Icon="@Icons.Material.Rounded.LocalPhone" />
-                                <MudText Typo="Typo.body2">@FormatPhoneNumber(context.Phone)</MudText>
-                                <MudText Color="Color.Tertiary" Typo="Typo.body2">@(context.ModifiedAt?.ToString("dd MMM HH:mm") ?? context.CreatedAt.ToString("dd MMM HH:mm"))</MudText>
-                            </MudStack>
+                        <MudDivider Class="my-1" />
+                        <MudStack Row="true" Class="mt-2">
+                            <MudIcon Color="Color.Info" Style="font-size: medium;"
+                                Icon="@Icons.Material.Rounded.LocalPhone" />
+                            <MudText Typo="Typo.subtitle2" @onclick="() => ShowLeadDetails(context)">
+                                @FormatPhoneNumber(context.Phone)</MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.caption" Color="Color.Tertiary" Align="Align.Right"
+                                @onclick="() => ShowLeadDetails(context)">@(context.ModifiedAt?.ToString("dd MMM yyyy HH:mm") ??
+                                context.CreatedAt?.ToString("dd MMM yyyy HH:mm"))
+                            </MudText>
                         </MudStack>
                     </MudCardContent>
-                </MudCard> 
+                </MudCard>
             </ItemRenderer>
         </MudDropContainer>
     </div>
@@ -86,24 +150,19 @@
 @code {
     private MudDropContainer<Lead> dropContainer = default!;
     private List<Lead> leads = new();
+    private List<Course> courses = new();
     private string searchQuery = "";
     private string currentStatus = "Barchasi";
     private List<Lead> filteredLeads = new();
     [CascadingParameter]
-    private MudDialogInstance? MudDialog { get; set; } 
-    private void Cancel()
-    {
-        if (MudDialog != null)
-        {
-            MudDialog.Cancel();
-        }
-    }
-    private Dictionary<int, bool> leadDetailsVisibility = new Dictionary<int, bool>();
+    private MudDialogInstance? MudDialog { get; set; }
+
 
     protected override async Task OnInitializedAsync()
     {
         leads = (await LeadService.GetLeadsAsync()).OrderByDescending(l => l.ModifiedAt).ToList();
-        filteredLeads = new List<Lead>(leads);
+        filteredLeads = leads.Where(l => !l.IsHidden).ToList();
+        courses = (await CourseService.GetCoursesAsync()).ToList();
     }
 
     private void ShowLeadDetails(Lead lead)
@@ -113,63 +172,33 @@
 
     private void OnSearch(string text)
     {
-        searchQuery = text;
-
-        if (string.IsNullOrEmpty(text))
-        {
-            filteredLeads = new List<Lead>(leads);
-        }
-        else
-        {
-            filteredLeads = leads.Where(l =>
-                (string.IsNullOrEmpty(currentStatus) || currentStatus == "Barchasi" || GetColumnForStatus(l.Status) == currentStatus) &&
-                (l.Name?.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) == true ||
-                 l.Phone?.Contains(searchQuery) == true))
-                .ToList();
-        }
-
-        StateHasChanged();
-    }
-
-    private void SetCurrentStatus(string status)
-    {
-        currentStatus = status;
-        if (!string.IsNullOrEmpty(searchQuery))
-        {
-            filteredLeads = leads.Where(l =>
-                (currentStatus == "Barchasi" || GetColumnForStatus(l.Status) == currentStatus) &&
-                (l.Name?.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) == true ||
-                 l.Phone?.Contains(searchQuery) == true))
-                .ToList();
-        }
-        else
-        {
-            filteredLeads = new List<Lead>(leads);
-        }
-
-        StateHasChanged();
+        searchQuery = text.Trim();
+        var updatedLeads = leads.Where(l =>
+        (string.IsNullOrEmpty(currentStatus) || currentStatus == "Barchasi" || GetColumnForStatus(l.Status) == currentStatus) &&
+        (l.Name?.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) == true ||
+        l.Phone?.Contains(searchQuery) == true)
+        ).ToList();
+        filteredLeads.Clear();
+        filteredLeads.AddRange(updatedLeads);
     }
 
     private async Task LeadUpdated(MudItemDropInfo<Lead> dropInfo)
     {
-        if (dropInfo.Item != null)
-        {
-            dropInfo.Item.Status = GetStatusForColumn(dropInfo.DropzoneIdentifier);
-            dropInfo.Item.ModifiedAt = DateTime.Now;
-
-            await LeadService.UpdateLeadAsync(dropInfo.Item);
-            leads = leads.OrderByDescending(l => l.ModifiedAt).ToList();
-            StateHasChanged();
-        }
+        dropInfo.Item!.Status = GetStatusForColumn(dropInfo.DropzoneIdentifier);
+        dropInfo.Item.ModifiedAt = DateTime.Now;
+        await LeadService.UpdateLeadAsync(dropInfo.Item);
+        leads = leads.OrderByDescending(l => l.ModifiedAt).ToList();
+        FilterLeads();
+        dropContainer.Refresh();
     }
-
     private async Task UpdateLeadStatus(Lead lead, LeadStatus newStatus)
     {
         lead.Status = newStatus;
         lead.ModifiedAt = DateTime.Now;
         await LeadService.UpdateLeadAsync(lead);
         leads = leads.OrderByDescending(l => l.ModifiedAt).ToList();
-        StateHasChanged();
+        FilterLeads();
+        dropContainer.Refresh();
     }
 
     private string GetColumnForStatus(LeadStatus status)
@@ -209,16 +238,14 @@
         };
     }
 
-    private string GetIconForColumn(string column)
+    private string GetIconForSource(LeadSource source)
     {
-        return column switch
+        return source switch
         {
-            "Barchasi" => Icons.Material.Filled.SelectAll,
-            "Yangi Lidlar" => Icons.Material.Filled.NewLabel,
-            "Bog'lanilgan" => Icons.Material.Filled.Phone,
-            "Kuzatuvda" => Icons.Material.Filled.Visibility,
-            "Yakuniy Holat" => Icons.Material.Filled.Done,
-            _ => Icons.Material.Filled.NewLabel
+            LeadSource.Telegram => Icons.Custom.Brands.Telegram,
+            LeadSource.Instagram => Icons.Custom.Brands.Instagram,
+            LeadSource.Referral => Icons.Material.Rounded.PeopleAlt,
+            _ => Icons.Material.Filled.Help
         };
     }
 
@@ -239,26 +266,139 @@
             _ => Color.Default
         };
     }
+    private string GetColorForStatus2(LeadStatus status)
+    {
+        return status switch
+        {
+            LeadStatus.New => "#2979FF",
+            LeadStatus.Phone => "orange",
+            LeadStatus.Contacted => "#7986CB",
+            LeadStatus.Recontact => "#E91E63",
+            LeadStatus.Incomplete => "#E53935",
+            LeadStatus.Registered => "#26A69A",
+            LeadStatus.AttendedTrialLesson => "#4DB6AC",
+            LeadStatus.Acquired => "#00897B",
+            LeadStatus.NotAcquired => "#E53935",
+            LeadStatus.Lost => "black",
+            _ => "gray"
+
+        };
+    }
 
     public static string FormatPhoneNumber(string? input)
     {
         if (string.IsNullOrEmpty(input))
-        {
             return string.Empty;
-        }
 
-        // Regular expression to match and capture digits
         var regex = new Regex(@"(\d{2})[\s\-]?(\d{3})[\s\-]?(\d{4})");
-
-        // Replace the matched digits with the desired format
         var result = regex.Replace(input, "$1 $2 $3");
-
-        // Handle cases where input doesn't match the pattern
         if (result == input)
+            return input;
+        return result;
+    }
+    private Course? selectedCourse;
+    private LeadSource? selectedLeadSource;
+    private List<Lead> hiddenLeads = new();
+    private bool showingHiddenLeads = false;
+
+    private async Task ToggleHiddenLeads()
+    {
+        showingHiddenLeads = !showingHiddenLeads;
+        if (showingHiddenLeads)
         {
-            return input; // Return original input if it doesn't match the pattern
+            hiddenLeads = await LeadService.GetHiddenLeadsAsync();
+            filteredLeads = hiddenLeads;
+        }
+        else
+        {
+            filteredLeads = leads.Where(l => !l.IsHidden).ToList();
+        }
+        FilterLeads();
+        dropContainer.Refresh();
+    }
+
+    private void OnSourceSelected(LeadSource? value)
+    {
+        selectedLeadSource = value;
+        FilterLeads();
+    }
+
+    private void OnCourseSelected(Course? value)
+    {
+        selectedCourse = value;
+        FilterLeads();
+    }
+
+    private void ClearSourceFilter()
+    {
+        selectedLeadSource = null;
+        FilterLeads();
+    }
+
+    private void ClearCourseFilter()
+    {
+        selectedCourse = null;
+        FilterLeads();
+    }
+
+    private void FilterLeads()
+    {
+        ValidateDateRange();
+        var leadsToFilter = showingHiddenLeads ? hiddenLeads : leads.Where(l => !l.IsHidden).ToList();
+
+        if (!string.IsNullOrEmpty(searchQuery))
+        {
+            leadsToFilter = leadsToFilter.Where(l => l.Name!.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
-        return result;
+        if (selectedLeadSource.HasValue)
+        {
+            leadsToFilter = leadsToFilter.Where(l => l.Source == selectedLeadSource.Value).ToList();
+        }
+
+        if (selectedCourse != null)
+        {
+            leadsToFilter = leadsToFilter.Where(l => l.InterestedCourse?.Id == selectedCourse.Id).ToList();
+        }
+
+
+        if (dateRange.Start.HasValue && dateRange.End.HasValue)
+        {
+            filteredLeads=leadsToFilter.Where(lead => lead.CreatedAt >= dateRange.Start && lead.CreatedAt <= dateRange.End)
+                .ToList();
+        }
+
+
+        filteredLeads = leadsToFilter;
+        StateHasChanged();
+    }
+
+    private void OpenAddLeadDialog()
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("OnLeadAdded", EventCallback.Factory.Create<Lead>(this, AddLead));
+        DialogService.Show<AddLeadDialog>("Qo'shish Lead", parameters);
+    }
+
+    private void AddLead(Lead lead)
+    {
+        leads.Insert(0, lead);
+        FilterLeads();
+    }
+
+    private DateRange dateRange { get; set; } = new DateRange(DateTime.Now.AddDays(-7), DateTime.Now);
+
+    private DateTime minDate;
+    private DateTime maxDate;
+    private MudDateRangePicker picker;
+
+    private void ValidateDateRange()
+    {
+
+    }
+    private void OnDateRangeChanged(DateRange? newRange)
+    {
+        ValidateDateRange();
+        FilterLeads();
     }
 }
